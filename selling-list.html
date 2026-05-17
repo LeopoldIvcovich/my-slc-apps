@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Selling List</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#1C1C1E;--calc:#2C2C2E;--surface:#3A3A3C;--surface2:#48484A;
+  --border:rgba(255,255,255,.08);--text1:#FFFFFF;--text2:#AEAEB2;--text3:#636366;
+  --green:#30D158;--green-dim:rgba(48,209,88,.12);--orange:#FF9F0A;
+  --accent:#0A84FF;--red:#FF453A;--r:18px;--r-sm:12px;
+}
+html,body{height:100%;background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.widget{width:100%;max-width:390px;background:var(--calc);border-radius:var(--r);overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.6),0 8px 24px rgba(0,0,0,.4)}
+
+/* SYNC STATUS */
+.sync-bar{background:#000;padding:6px 16px;display:flex;align-items:center;justify-content:flex-end;gap:6px;border-bottom:1px solid var(--border)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s}
+.sync-dot.connected{background:var(--green)}
+.sync-dot.syncing{background:var(--orange);animation:pulse .8s infinite}
+.sync-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+.display{background:#000;padding:24px 24px 18px}
+.display-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-family:'DM Mono',monospace}
+.display-total{font-family:'DM Mono',monospace;font-size:52px;font-weight:300;color:var(--text1);letter-spacing:-2px;line-height:1}
+.display-total .cents{font-size:30px;opacity:.7}
+.display-meta{display:flex;gap:14px;margin-top:10px}
+.dmeta{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:5px}
+.dmeta-val{color:var(--text2);font-weight:500}
+.dmeta-dot{width:6px;height:6px;border-radius:50%}
+
+.items-section{max-height:300px;overflow-y:auto;scrollbar-width:none}
+.items-section::-webkit-scrollbar{display:none}
+.edit-hint{font-size:10px;color:var(--text3);padding:8px 16px 0;font-family:'DM Mono',monospace;letter-spacing:.3px;text-align:center;opacity:.7}
+.empty-hint{padding:32px 24px;text-align:center;color:var(--text3);font-size:13px;line-height:1.6}
+.empty-hint .eh-icon{font-size:32px;margin-bottom:8px}
+
+.item-row{display:flex;align-items:center;border-bottom:1px solid var(--border)}
+.item-row:last-child{border-bottom:none}
+.item-check{width:48px;height:56px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.check-circle{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface2);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.check-circle.done{background:var(--green);border-color:var(--green)}
+.check-circle.done::after{content:'✓';color:#000;font-size:12px;font-weight:700}
+.item-info{flex:1;min-width:0;padding:10px 0}
+.item-name{font-size:15px;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;padding:2px 4px;border-radius:5px;display:block;transition:background .15s,color .15s}
+.item-name:hover{background:rgba(255,255,255,.06)}
+.item-name.sold{color:var(--text3);text-decoration:line-through}
+.item-price{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;cursor:text;padding:2px 4px;border-radius:5px;display:inline-block;transition:background .15s,color .15s}
+.item-price:hover{background:rgba(10,132,255,.15);color:var(--accent)}
+.item-price.sold{color:var(--green);opacity:.8}
+.inline-input{background:var(--surface2);border:1.5px solid var(--accent);border-radius:7px;color:var(--text1);font-family:'DM Mono',monospace;font-size:14px;padding:3px 8px;outline:none;width:100%;box-shadow:0 0 0 3px rgba(10,132,255,.15)}
+.inline-input.name-inp{font-family:'DM Sans',sans-serif;font-size:14px}
+.item-del{width:44px;height:56px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text3);font-size:15px;transition:color .15s}
+.item-del:active{color:var(--red)}
+
+.add-section{padding:12px 16px;border-top:1px solid var(--border)}
+.add-row{display:flex;gap:8px;align-items:center}
+.add-input{flex:1;background:var(--surface);border:none;border-radius:var(--r-sm);padding:12px 14px;font-size:15px;color:var(--text1);outline:none;font-family:inherit}
+.add-input::placeholder{color:var(--text3)}
+.add-input:focus{background:var(--surface2)}
+.add-price{width:90px;flex:none;font-family:'DM Mono',monospace;font-size:14px}
+.add-btn{width:42px;height:42px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:0 4px 12px rgba(10,132,255,.35);transition:all .15s}
+.add-btn:active{transform:scale(.9);opacity:.8}
+
+.total-bar{background:#000;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)}
+.tb-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-family:'DM Mono',monospace}
+.tb-breakdown{font-size:12px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace}
+.tb-breakdown span{color:var(--green)}
+.tb-amount{font-family:'DM Mono',monospace;font-size:28px;font-weight:400;color:var(--green);letter-spacing:-1px}
+
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-top:1px solid var(--border)}
+.action-btn{padding:14px;background:var(--calc);border:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .1s}
+.action-btn:active{background:var(--surface)}
+.action-btn.danger{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="sync-bar">
+    <div class="sync-dot" id="syncDot"></div>
+    <div class="sync-label" id="syncLabel">connecting…</div>
+  </div>
+  <div class="display">
+    <div class="display-label">Total to collect</div>
+    <div class="display-total"><span id="dispDollars">$0</span><span class="cents" id="dispCents">.00</span></div>
+    <div class="display-meta">
+      <div class="dmeta"><div class="dmeta-dot" style="background:#636366"></div><span id="metaTotal">0 items</span></div>
+      <div class="dmeta"><div class="dmeta-dot" style="background:#30D158"></div><span id="metaSold">0 sold</span><span class="dmeta-val" id="metaSoldAmt"></span></div>
+      <div class="dmeta"><div class="dmeta-dot" style="background:#FF9F0A"></div><span id="metaLeft">0 left</span></div>
+    </div>
+  </div>
+  <div class="items-section" id="itemsList"></div>
+  <div class="add-section">
+    <div class="add-row">
+      <input class="add-input" id="inpName" type="text" placeholder="Item name…" onkeydown="handleEnter(event)">
+      <input class="add-input add-price" id="inpPrice" type="number" min="0" step="1" placeholder="$0" onkeydown="handleEnter(event)">
+      <button class="add-btn" onclick="addItem()">+</button>
+    </div>
+  </div>
+  <div class="total-bar">
+    <div><div class="tb-label">Sold so far</div><div class="tb-breakdown" id="tbBreakdown">— / —</div></div>
+    <div class="tb-amount" id="tbAmount">$0</div>
+  </div>
+  <div class="btn-row">
+    <button class="action-btn" onclick="markAllSold()">✓ Mark all sold</button>
+    <button class="action-btn danger" onclick="clearAll()">✕ Clear all</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAsWiJNuQurGLBT4POmTqWTL_wa2BbGZps",
+  authDomain: "calculator-sell.firebaseapp.com",
+  databaseURL: "https://calculator-sell-default-rtdb.firebaseio.com",
+  projectId: "calculator-sell",
+  storageBucket: "calculator-sell.firebasestorage.app",
+  messagingSenderId: "938081014350",
+  appId: "1:938081014350:web:373e769be65db80778e91f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const itemsRef = ref(db, 'selling/items');
+
+let items = [];
+
+// ── SYNC STATUS ──
+function setSyncStatus(state) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if (state === 'connected') { dot.className='sync-dot connected'; label.textContent='synced'; }
+  else if (state === 'syncing') { dot.className='sync-dot syncing'; label.textContent='saving…'; }
+  else { dot.className='sync-dot'; label.textContent='offline'; }
+}
+
+// ── LISTEN FOR CHANGES (real-time) ──
+onValue(itemsRef, (snapshot) => {
+  const data = snapshot.val();
+  items = data ? Object.entries(data).map(([fbKey, v]) => ({ fbKey, ...v })) : [];
+  setSyncStatus('connected');
+  render();
+}, (error) => {
+  setSyncStatus('offline');
+});
+
+// ── HELPERS ──
+function fm(n) { return '$' + Number(n || 0).toFixed(2); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function handleEnter(e) { if (e.key === 'Enter') addItem(); }
+
+// ── ADD ──
+window.addItem = function() {
+  const name = document.getElementById('inpName').value.trim();
+  const price = parseFloat(document.getElementById('inpPrice').value) || 0;
+  if (!name) { document.getElementById('inpName').focus(); return; }
+  setSyncStatus('syncing');
+  push(itemsRef, { name, price, sold: false, createdAt: Date.now() });
+  document.getElementById('inpName').value = '';
+  document.getElementById('inpPrice').value = '';
+  document.getElementById('inpName').focus();
+};
+
+// ── TOGGLE SOLD ──
+window.toggleSold = function(fbKey, currentSold) {
+  setSyncStatus('syncing');
+  update(ref(db, 'selling/items/' + fbKey), { sold: !currentSold });
+};
+
+// ── DELETE ──
+window.deleteItem = function(fbKey) {
+  setSyncStatus('syncing');
+  remove(ref(db, 'selling/items/' + fbKey));
+};
+
+// ── MARK ALL ──
+window.markAllSold = function() {
+  items.forEach(i => update(ref(db, 'selling/items/' + i.fbKey), { sold: true }));
+};
+
+// ── CLEAR ALL ──
+window.clearAll = function() {
+  if (!items.length) return;
+  if (confirm('Clear all items?')) { setSyncStatus('syncing'); set(itemsRef, null); }
+};
+
+// ── INLINE EDIT PRICE ──
+window.startEditPrice = function(fbKey, currentPrice) {
+  const el = document.getElementById('price-' + fbKey);
+  if (!el) return;
+  const inp = document.createElement('input');
+  inp.className = 'inline-input';
+  inp.type = 'number'; inp.min = '0'; inp.step = '1';
+  inp.value = currentPrice || ''; inp.placeholder = '0';
+  inp.style.width = '80px';
+  el.replaceWith(inp); inp.focus(); inp.select();
+  function commit() {
+    const val = parseFloat(inp.value) || 0;
+    setSyncStatus('syncing');
+    update(ref(db, 'selling/items/' + fbKey), { price: val });
+  }
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') render(); });
+};
+
+// ── INLINE EDIT NAME ──
+window.startEditName = function(fbKey, currentName) {
+  const el = document.getElementById('name-' + fbKey);
+  if (!el) return;
+  const inp = document.createElement('input');
+  inp.className = 'inline-input name-inp';
+  inp.type = 'text'; inp.value = currentName; inp.placeholder = 'Item name…';
+  el.replaceWith(inp); inp.focus(); inp.select();
+  function commit() {
+    const val = inp.value.trim();
+    if (val) { setSyncStatus('syncing'); update(ref(db, 'selling/items/' + fbKey), { name: val }); }
+    else render();
+  }
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') render(); });
+};
+
+// ── RENDER ──
+function render() {
+  const total = items.reduce((s, i) => s + (i.price || 0), 0);
+  const soldItems = items.filter(i => i.sold);
+  const soldAmt = soldItems.reduce((s, i) => s + (i.price || 0), 0);
+  const leftCount = items.filter(i => !i.sold).length;
+
+  const [dollars, cents] = total.toFixed(2).split('.');
+  document.getElementById('dispDollars').textContent = '$' + parseInt(dollars).toLocaleString();
+  document.getElementById('dispCents').textContent = '.' + cents;
+  document.getElementById('metaTotal').textContent = items.length + ' item' + (items.length !== 1 ? 's' : '');
+  document.getElementById('metaSold').textContent = soldItems.length + ' sold';
+  document.getElementById('metaSoldAmt').textContent = soldItems.length ? '  ' + fm(soldAmt) : '';
+  document.getElementById('metaLeft').textContent = leftCount + ' left';
+  document.getElementById('tbAmount').textContent = fm(soldAmt);
+  document.getElementById('tbBreakdown').innerHTML = soldItems.length
+    ? `<span>${soldItems.length}</span> of ${items.length} · ${Math.round(soldAmt / (total || 1) * 100)}%`
+    : '— / —';
+
+  const list = document.getElementById('itemsList');
+  if (!items.length) {
+    list.innerHTML = `<div class="empty-hint"><div class="eh-icon">📦</div>Add items you're selling<br><span style="font-size:11px;opacity:.5">Synced across all your devices</span></div>`;
+    return;
+  }
+
+  list.innerHTML = `<div class="edit-hint">Tap name or price to edit · changes sync instantly</div>` +
+    items.map(item => `
+    <div class="item-row">
+      <div class="item-check" onclick="toggleSold('${item.fbKey}', ${item.sold})">
+        <div class="check-circle ${item.sold ? 'done' : ''}"></div>
+      </div>
+      <div class="item-info">
+        <div class="item-name ${item.sold ? 'sold' : ''}" id="name-${item.fbKey}" onclick="startEditName('${item.fbKey}', '${esc(item.name)}')">${esc(item.name)}</div>
+        <div class="item-price ${item.sold ? 'sold' : ''} ${!item.price ? 'no-price' : ''}" id="price-${item.fbKey}" onclick="startEditPrice('${item.fbKey}', ${item.price || 0})">
+          ${item.price ? fm(item.price) : 'Tap to add price'}
+        </div>
+      </div>
+      <div class="item-del" onclick="deleteItem('${item.fbKey}')">✕</div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
